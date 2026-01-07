@@ -5,8 +5,12 @@ const {
   getUser,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  loginUser
 } = require('../controllers/userController');
+
+// Login route
+router.post('/login', loginUser);
 
 router.route('/')
   .get(getAllUsers)

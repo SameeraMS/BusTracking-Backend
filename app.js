@@ -1,8 +1,11 @@
 const express = require('express');
+const http = require('http');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const { gpsService } = require('./services/gpsService');
+const { gpsProcessingService } = require('./services/gpsProcessingService');
+const { websocketService } = require('./services/websocketService');
 
 // Load env vars
 dotenv.config();
@@ -10,11 +13,24 @@ dotenv.config();
 // Connect to database
 connectDB();
 
-// Initialize GPS service
-console.log('Initializing GPS service...');
-console.log(`GPS service initialized with ${gpsService.getAllDrivers().length} registered drivers`);
+// Initialize GPS services
+console.log('Initializing GPS services...');
+console.log(`Legacy GPS service initialized with ${gpsService.getAllDrivers().length} registered drivers`);
+console.log('Enhanced GPS processing service initialized');
+console.log('Processing service stats:', gpsProcessingService.getProcessingStats());
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize WebSocket service
+const wsInitialized = websocketService.initialize(server);
+if (wsInitialized) {
+  // Connect GPS processing service with WebSocket service for real-time broadcasting
+  gpsProcessingService.setWebSocketService(websocketService);
+  console.log('WebSocket service integrated with GPS processing service');
+} else {
+  console.error('Failed to initialize WebSocket service');
+}
 
 // Middleware
 app.use(cors());
@@ -44,12 +60,27 @@ app.get('/api/health', (req, res) => {
       lastUpdate: new Date().toISOString()
     };
 
+    // Get processing service status
+    const processingStats = gpsProcessingService.getProcessingStats();
+    const websocketStats = websocketService.getStats();
+
     res.status(200).json({
       success: true,
       message: 'Server is running',
       services: {
         database: 'connected',
-        gps: gpsStatus
+        gps: gpsStatus,
+        processing: {
+          serviceRunning: true,
+          ...processingStats
+        },
+        websocket: {
+          serviceRunning: websocketStats.isRunning,
+          activeConnections: websocketStats.activeConnections,
+          totalConnections: websocketStats.totalConnections,
+          messagesSent: websocketStats.messagesSent,
+          lastBroadcast: websocketStats.lastBroadcast
+        }
       }
     });
   } catch (error) {
@@ -60,6 +91,10 @@ app.get('/api/health', (req, res) => {
       services: {
         database: 'connected',
         gps: {
+          serviceRunning: false,
+          error: error.message
+        },
+        processing: {
           serviceRunning: false,
           error: error.message
         }
@@ -87,8 +122,28 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`WebSocket server available at ws://localhost:${PORT}/ws`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  websocketService.shutdown();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  websocketService.shutdown();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
 
 module.exports = app;
