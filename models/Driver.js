@@ -24,6 +24,17 @@ const driverSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  routeId: {
+    type: String,
+    required: false,
+    trim: true,
+    index: true
+  },
+  routeName: {
+    type: String,
+    required: false,
+    trim: true
+  },
   nic: {
     type: String,
     required: true,

@@ -42,6 +42,7 @@ app.use('/api/drivers', require('./routes/driverRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/timetables', require('./routes/timetableRoutes'));
 app.use('/api/gps', require('./routes/gpsRoutes'));
+app.use('/api/routes', require('./routes/routeRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

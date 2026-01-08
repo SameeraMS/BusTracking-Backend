@@ -216,6 +216,7 @@ class GPSProcessingService {
         driverId: locationData.driverId,
         busId: locationData.busId,
         routeId: locationData.routeId,
+        routeName: session?.routeName || locationData.routeName,
         location: {
           type: 'Point',
           coordinates: [locationData.longitude, locationData.latitude]

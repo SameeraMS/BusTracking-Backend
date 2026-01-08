@@ -15,7 +15,7 @@ const { gpsProcessingService } = require('../services/gpsProcessingService');
  */
 exports.registerDriver = async (req, res) => {
   try {
-    const { name, phone, licenseNumber, busId, routeId, email, password } = req.body;
+    const { name, phone, licenseNumber, busId, routeId, email, password, routeName } = req.body;
 
     console.log('Received driver registration request:', req.body);
 
@@ -93,6 +93,8 @@ exports.registerDriver = async (req, res) => {
         email: email.toLowerCase(),
         password: password, // Will be hashed by the model's pre-save hook
         route: routeId,
+        routeId: routeId,
+        routeName: routeName || routeId, // Use routeName if provided, otherwise use routeId
         nic: licenseNumber,
         telephone: phone,
         vehicleNumber: busId,
@@ -288,6 +290,7 @@ exports.loginDriver = async (req, res) => {
           driverId: driverSession.driverId,
           busId: driverSession.busId,
           routeId: driverSession.routeId,
+          routeName: mongoDriver.routeName || mongoDriver.route,
           email: mongoDriver.email,
           isActive: true,
           startTime: new Date(driverSession.sessionStartTime),

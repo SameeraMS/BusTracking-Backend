@@ -24,6 +24,10 @@ const driverSessionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  routeName: {
+    type: String,
+    required: false
+  },
   deviceId: {
     type: String,
     required: false,

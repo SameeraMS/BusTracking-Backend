@@ -20,6 +20,10 @@ const driverLocationSchema = new mongoose.Schema({
     required: true,
     index: true
   },
+  routeName: {
+    type: String,
+    required: false
+  },
   location: {
     type: {
       type: String,
